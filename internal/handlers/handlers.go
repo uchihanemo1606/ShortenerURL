@@ -38,7 +38,13 @@ func (h *Handler) ShortenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Tạo short URL
-	shortCode := h.service.ShortenURL(longURL)
+	shortCode, err := h.service.ShortenURL(longURL)
+	{
+		if err != nil{
+			http.Error(w, "Failed to shorten URL", http.StatusInternalServerError)
+			return
+		}
+	}
 	shortURL := "http://localhost:8080/" + shortCode
 
 	// Trả về JSON response

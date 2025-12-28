@@ -4,15 +4,15 @@ import (
 	"context"
 	"log"
 	"os"
-	"time"
-
 	"github.com/redis/go-redis/v9"
+	"urlshortener/internal/models"
+	"encoding/json"
 )
 
 type RedisStore struct {
 	client *redis.Client
 	ctx    context.Context
-	prefix string // dùng để tổ chức key: "url:abc123"
+	prefix string 
 }
 
 // NewRedisStore khởi tạo kết nối với Upstash Redis
@@ -44,23 +44,23 @@ func NewRedisStore() *RedisStore {
 	}
 }
 
-// Save lưu dữ liệu short URL dưới dạng Hash
-func (r *RedisStore) Save(shortCode, longURL string) {
-	key := r.prefix + shortCode
+func (r *RedisStore) Save(url models.URL) error {
+	key := r.prefix + url.ShortCode
 
-	data := map[string]interface{}{
-		"long":    longURL,
-		"created": time.Now().Unix(),
-		"clicks":  0,
+	// Chuyển struct thành JSON
+	data, err := json.Marshal(url)
+	if err != nil {
+		log.Printf("Lỗi marshal JSON: %v", err)
+		return err
 	}
 
-	// Lưu toàn bộ hash
-	if err := r.client.HSet(r.ctx, key, data).Err(); err != nil {
+	// Lưu JSON vào Redis
+	if err := r.client.Set(r.ctx, key, data, 0).Err(); err != nil {
 		log.Printf("Redis lưu lỗi: %v", err)
+		return err
 	}
 
-	// Optional: set thời hạn hết hạn (ví dụ 1 năm)
-	// r.client.Expire(r.ctx, key, 365*24*time.Hour)
+	return nil
 }
 
 // FindByShortCode lấy URL gốc và tăng lượt click

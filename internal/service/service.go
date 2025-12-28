@@ -3,6 +3,8 @@ package service
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"time"
+	"urlshortener/internal/models"
 	"urlshortener/internal/storage"
 )
 
@@ -17,14 +19,20 @@ func NewShortenerService(store *storage.RedisStore) *ShortenerService {
 }
 
 // ShortenURL tạo short code cho URL dài
-func (s *ShortenerService) ShortenURL(longURL string) string {
+func (s *ShortenerService) ShortenURL(longURL string) (string, error) {
 	// Tạo short code ngẫu nhiên 6 ký tự
 	shortCode := generateShortCode()
 
-	// Lưu vào storage
-	s.store.Save(shortCode, longURL)
-
-	return shortCode
+	url := models.URL{
+		ShortCode : shortCode,
+		LongURL : longURL,
+		CreatedAt : time.Now(),
+		Clicks : 0,
+	}
+	if err := s.store.Save(url); err != nil {
+        return "", err
+    }
+	return shortCode , nil
 }
 
 // GetLongURL lấy URL gốc từ short code
