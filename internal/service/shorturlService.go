@@ -41,6 +41,7 @@ func (s *ShortenerService) ShortenURL(longURL string) (string, error) {
 		ShortCode: shortCode,
 		LongURL:   longURL,
 		CreatedAt: time.Now(),
+		ExpiresAt: time.Now().Add(14 * 24 * time.Hour),
 		Clicks:    0,
 	}
 
@@ -117,3 +118,9 @@ func (s *ShortenerService) generateUniqueShortCode() string {
 		}
 	}
 }
+
+// func (s *ShortenerService) GetAllShortURLs() ([]models.URL, errors){
+
+// }
+
+// }
