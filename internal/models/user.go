@@ -8,3 +8,7 @@ type User struct {
 	Password 	string    `json:"password" gorm:"not null"`
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
 }
+
+func (User) TableName() string{
+	return "users"
+}

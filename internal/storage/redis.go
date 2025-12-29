@@ -13,7 +13,7 @@ type RedisStore struct {
     prefix string
 }
 
-// NewRedisStore khởi tạo kết nối với Upstash Redis
+
 func NewRedisStore() *RedisStore {
     redisURL := os.Getenv("REDIS_URL")
     if redisURL == "" {

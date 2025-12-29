@@ -5,7 +5,6 @@ import (
     "net/http"
     "time"
     "urlshortener/internal/service"
-
     "github.com/golang-jwt/jwt/v5"
 )
 
