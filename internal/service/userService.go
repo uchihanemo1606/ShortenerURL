@@ -53,3 +53,22 @@ func (us *UserService) CreateUser(email, password string) (* models.User, error)
 
 	return user, nil
 }
+
+func (us *UserService) AuthenticateUser(email, password string) (*models.User, error){
+	key := us.store.GetPrefix() + "user:" + email
+	data, err := us.store.GetClient().Get(us.store.GetContext(), key).Result()
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	var user models.User
+	if err := json.Unmarshal([]byte(data), &user); err != nil {
+		return nil, err
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil{
+		return nil, errors.New("invalid password")
+	}
+		
+	return &user, nil
+
+}
