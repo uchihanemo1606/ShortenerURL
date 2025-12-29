@@ -25,6 +25,12 @@ func (h *Handler) ShortenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID := GetUserIDFromContext(r.Context())
+	if userID == ""{
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	// Lấy URL từ query parameter
 	longURL := r.URL.Query().Get("url")
 	if longURL == "" {
@@ -39,7 +45,7 @@ func (h *Handler) ShortenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Tạo short URL
-	shortCode, err := h.service.ShortenURL(longURL)
+	shortCode, err := h.service.ShortenURL(longURL, userID)
 	if err != nil {
 		http.Error(w, "Failed to shorten URL", http.StatusInternalServerError)
 		return

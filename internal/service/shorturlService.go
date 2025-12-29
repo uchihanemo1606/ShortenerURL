@@ -27,7 +27,7 @@ func NewShortenerService(store *storage.RedisStore) *ShortenerService {
 }
 
 // ShortenURL tạo short code cho URL dài
-func (s *ShortenerService) ShortenURL(longURL string) (string, error) {
+func (s *ShortenerService) ShortenURL(longURL string, UserID string) (string, error) {
 
 	if shortCode, exits := s.GetExitingShortCode(longURL); exits {
 		return shortCode, nil
@@ -41,6 +41,7 @@ func (s *ShortenerService) ShortenURL(longURL string) (string, error) {
 		LongURL:   longURL,
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(14 * 24 * time.Hour),
+		UserID: UserID,
 		Clicks:    0,
 	}
 
