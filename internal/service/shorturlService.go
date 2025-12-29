@@ -7,7 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
+	"net/url"
+	"strings"
 	// "hash"
 	"log"
 	"time"
@@ -33,8 +34,24 @@ func (s *ShortenerService) ShortenURL(longURL string, UserID string) (string, er
 		return shortCode, nil
 	}
 
+	lockkey := s.store.GetPrefix() + "lock:" + fmt.Sprintf("%x", sha256.Sum256([]byte(longURL)))
+	locked, err := s.store.GetClient().SetNX(s.store.GetContext(), lockkey, "1", 5*time.Second).Result()
+	if err != nil {
+		return "", err
+	}
+
+	if !locked {
+		time.Sleep(100 * time.Millisecond)
+		return s.ShortenURL(longURL, UserID)
+	}
+	defer s.store.GetClient().Del(s.store.GetContext(), lockkey)
+
 	// Tạo short code ngẫu nhiên 6 ký tự
 	shortCode := s.generateUniqueShortCode()
+
+	if shortCode, exists := s.GetExitingShortCode(longURL); exists {
+		return shortCode, nil
+	}
 
 	url := models.URL{
 		ShortCode: shortCode,
@@ -142,4 +159,29 @@ func (s *ShortenerService) GetAllShortURLs() ([]models.URL, error){
 	}
 
 	return urls, nil
+}
+
+func (s *ShortenerService) ValidateLongURL(LongURL string) error {
+	if LongURL == "" {
+		return errors.New("Long URL is required")
+	}
+	if len(LongURL) > 2048 {
+		return errors.New("Long URL exceeds maximum length of 2048 characters")
+	}
+
+	parsedURL, err := url.Parse(LongURL)
+    if err != nil {
+        return errors.New("URL not valid")
+    }
+
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+        return errors.New("Only http and https URLs are supported")
+    }
+
+	hostname := strings.ToLower(parsedURL.Hostname())
+    if hostname == "" || hostname == "localhost" || strings.HasPrefix(hostname, "127.") || strings.HasPrefix(hostname, "192.168.") || strings.HasPrefix(hostname, "10.") {
+        return errors.New("Invalid hostname")
+    }
+	return nil
+
 }
