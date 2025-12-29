@@ -119,8 +119,27 @@ func (s *ShortenerService) generateUniqueShortCode() string {
 	}
 }
 
-// func (s *ShortenerService) GetAllShortURLs() ([]models.URL, errors){
+func (s *ShortenerService) GetAllShortURLs() ([]models.URL, error){
+	pattern := s.store.GetPrefix() + "*"
+	keys, err := s.store.GetClient().Keys(s.store.GetContext(), pattern).Result()
+	if err != nil {
+		return nil, err
+	}
 
-// }
+	var urls []models.URL
+	for _, key := range keys {
+		data, err := s.store.GetClient().Get(s.store.GetContext(), key).Result()
+		if err != nil {
+			log.Printf("Error retrieving URL for key %s: %v", key, err)
+			continue
+		}
+		var url models.URL
+		if err := json.Unmarshal([]byte(data), &url); err != nil {
+			log.Printf("Error unmarshaling URL for key %s: %v", key, err)
+			continue
+		}
+		urls = append(urls, url)
+	}
 
-// }
+	return urls, nil
+}

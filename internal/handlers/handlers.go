@@ -82,3 +82,26 @@ func (h *Handler) RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	// Redirect
 	http.Redirect(w, r, longURL, http.StatusFound)
 }
+
+
+func (h *Handler) GetAllShortURLsHandler(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodGet {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+
+    urls, err := h.service.GetAllShortURLs() 
+    if err != nil {
+        http.Error(w, "Failed to get URLs", http.StatusInternalServerError)
+        return
+    }
+
+    var shortCodes []string
+    for _, url := range urls {
+        shortCodes = append(shortCodes, url.ShortCode)
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string][]string{"short_urls": shortCodes})
+}
