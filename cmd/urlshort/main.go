@@ -52,7 +52,6 @@ func main() {
     routes = append(routes, Route{"GET", "/", "Redirect short URL"})
     http.HandleFunc("/", handler.RedirectHandler)
 
-    // In routes ra terminal (giống Laravel route:list)
     fmt.Println("📋 Registered Routes:")
     fmt.Printf("%-8s %-20s %s\n", "Method", "Path", "Description")
     fmt.Println("---------------------------------------------")
@@ -62,7 +61,6 @@ func main() {
     fmt.Println()
 
     log.Println("🚀 URL Shortener đang chạy tại http://localhost:8080")
-    log.Println("Ví dụ: http://localhost:8080/shorten?url=https://google.com")
 
     log.Fatal(http.ListenAndServe(":8080", nil))
 }
