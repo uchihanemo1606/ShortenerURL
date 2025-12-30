@@ -23,10 +23,18 @@ profile.cov
 # Go workspace file
 go.work
 go.work.sum
+<<<<<<< HEAD
+=======
+/pkg/mod/
+>>>>>>> develop
 
 # env file
 .env
 
 # Editor/IDE
 # .idea/
+<<<<<<< HEAD
 # .vscode/
+=======
+# .vscode/
+>>>>>>> develop
