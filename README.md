@@ -34,7 +34,7 @@ go mod download
 3. Chạy Redis server
 
 ## Chạy ứng dụng
-1. go mod tidy
+1. go mod tidy (config các dependencies)
 2. go run main.go(hoặc chỉ cần gõ "air" trên terminal)
 
 ## Test API
@@ -115,15 +115,21 @@ Các endpoint có sẵn:
 
 ## Challenges
 Challenge 1: Xử lý đồng thời nhiều requests cho cùng URL
+
 hướng giải quyết : dùng lock chỉ giải quyết 1 request tạo URL trên cùng 1 thời điểm
+
 học được: tác hại và sự nguy hiểm của deadlock đối với dữ án
 
 Challenge 2: Đảm bảo tính duy nhất đối với random generation
+
 hướng giải quyết: dùng vòng lặp để random tạo mã ngắn cho đến khi không trùng lặp(nếu việc trùng lặp xảy ra liên tục trên nhiều request thì sẽ gây ra chậm, lag server)
+
 học được: nhìn nhận được tầm quan trọng của việc kiểm soát lỗi các lỗi nhỏ có thế gây hư hỏng hệ thống
 
 Challenge 3: nhập URL không hợp lệ nhưng hệ thống vẫn cho ra kết quả
+
 hướng giải quyết: dùng thư viện `http/net` của golang để validate URL gốc 
+
 học được: tầm quan trọng của việc validate dữ liệu
 
 ##Limitations & Improvements
