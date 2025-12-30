@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"os"
 	"urlshortener/internal/service"
-
 )
 
 type Handler struct {
@@ -18,7 +18,6 @@ func NewHandler(service *service.ShortenerService) *Handler {
 	}
 }
 
-// ShortenHandler xử lý yêu cầu tạo short URL
 func (h *Handler) ShortenHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -50,7 +49,7 @@ func (h *Handler) ShortenHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to shorten URL", http.StatusInternalServerError)
 		return
 	}
-	shortURL := "http://localhost:8080/" + shortCode
+	shortURL := os.Getenv("BASE_URL") + shortCode
 
 	// Trả về JSON response
 	response := map[string]string{
@@ -64,22 +63,19 @@ func (h *Handler) ShortenHandler(w http.ResponseWriter, r *http.Request) {
 
 // RedirectHandler xử lý redirect từ short URL
 func (h *Handler) RedirectHandler(w http.ResponseWriter, r *http.Request) {
-	// Lấy short code từ path
+
 	shortCode := r.URL.Path[1:]
 	if shortCode == "" {
 		http.NotFound(w, r)
 		return
 	}
 
-	// Tìm URL gốc
 	longURL, found := h.service.GetLongURL(shortCode)
 	if !found {
 		http.NotFound(w,r)
 		return
 	}
 	
-
-	// Redirect
 	http.Redirect(w, r, longURL, http.StatusFound)
 }
 
@@ -89,19 +85,11 @@ func (h *Handler) GetAllShortURLsHandler(w http.ResponseWriter, r *http.Request)
         http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
         return
     }
-
-
     urls, err := h.service.GetAllShortURLs() 
     if err != nil {
         http.Error(w, "Failed to get URLs", http.StatusInternalServerError)
         return
     }
-
-    var shortCodes []string
-    for _, url := range urls {
-        shortCodes = append(shortCodes, url.ShortCode)
-    }
-
     w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(map[string][]string{"short_urls": shortCodes})
+    json.NewEncoder(w).Encode(urls)
 }

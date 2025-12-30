@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-
+	"os"
 	// "hash"
 	"log"
 	"time"
@@ -142,29 +142,53 @@ func (s *ShortenerService) generateUniqueShortCode() string {
 	}
 }
 
-func (s *ShortenerService) GetAllShortURLs() ([]models.URL, error) {
-	pattern := s.store.GetPrefix() + "*"
-	keys, err := s.store.GetClient().Keys(s.store.GetContext(), pattern).Result()
-	if err != nil {
-		return nil, err
-	}
+func (s *ShortenerService) GetAllShortURLs() ([]struct {
+    Clicks    int64     `json:"clicks"`     // Số lượt click
+    FullURL   string    `json:"full_url"`   // URL đầy đủ (BASE_URL + ShortCode)
+    CreatedAt time.Time `json:"created_at"` // Ngày tạo
+}, error) {
+    pattern := s.store.GetPrefix() + "*"
+    keys, err := s.store.GetClient().Keys(s.store.GetContext(), pattern).Result()
+    if err != nil {
+        return nil, err
+    }
 
-	var urls []models.URL
-	for _, key := range keys {
-		data, err := s.store.GetClient().Get(s.store.GetContext(), key).Result()
-		if err != nil {
-			log.Printf("Error retrieving URL for key %s: %v", key, err)
-			continue
-		}
-		var url models.URL
-		if err := json.Unmarshal([]byte(data), &url); err != nil {
-			log.Printf("Error unmarshaling URL for key %s: %v", key, err)
-			continue
-		}
-		urls = append(urls, url)
-	}
+    baseURL := os.Getenv("BASE_URL")
 
-	return urls, nil
+    var summaries []struct {
+        Clicks    int64     `json:"clicks"`
+        FullURL   string    `json:"full_url"`
+        CreatedAt time.Time `json:"created_at"`
+    }
+
+    for _, key := range keys {
+        data, err := s.store.GetClient().Get(s.store.GetContext(), key).Result()
+        if err != nil {
+            log.Printf("Error retrieving URL for key %s: %v", key, err)
+            continue
+        }
+        var url models.URL
+        if err := json.Unmarshal([]byte(data), &url); err != nil {
+            log.Printf("Error unmarshaling URL for key %s: %v", key, err)
+            continue
+        }
+
+        // Tạo FullURL
+        fullURL := baseURL + url.ShortCode
+
+        // Thêm vào summaries chỉ với các field cần thiết
+        summaries = append(summaries, struct {
+            Clicks    int64     `json:"clicks"`
+            FullURL   string    `json:"full_url"`
+            CreatedAt time.Time `json:"created_at"`
+        }{
+            Clicks:    url.Clicks,
+            FullURL:   fullURL,
+            CreatedAt: url.CreatedAt,
+        })
+    }
+
+    return summaries, nil
 }
 
 func (s *ShortenerService) ValidateLongURL(LongURL string) error {
