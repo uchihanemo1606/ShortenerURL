@@ -9,11 +9,13 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+
 	// "hash"
 	"log"
 	"time"
 	"urlshortener/internal/models"
 	"urlshortener/internal/storage"
+
 	"github.com/redis/go-redis/v9"
 )
 
@@ -29,6 +31,10 @@ func NewShortenerService(store *storage.RedisStore) *ShortenerService {
 
 // ShortenURL tạo short code cho URL dài
 func (s *ShortenerService) ShortenURL(longURL string, UserID string) (string, error) {
+	err := s.ValidateLongURL(longURL)
+	if err != nil {
+		return "", err
+	}
 
 	if shortCode, exits := s.GetExitingShortCode(longURL); exits {
 		return shortCode, nil
@@ -58,7 +64,7 @@ func (s *ShortenerService) ShortenURL(longURL string, UserID string) (string, er
 		LongURL:   longURL,
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(14 * 24 * time.Hour),
-		UserID: UserID,
+		UserID:    UserID,
 		Clicks:    0,
 	}
 
@@ -136,7 +142,7 @@ func (s *ShortenerService) generateUniqueShortCode() string {
 	}
 }
 
-func (s *ShortenerService) GetAllShortURLs() ([]models.URL, error){
+func (s *ShortenerService) GetAllShortURLs() ([]models.URL, error) {
 	pattern := s.store.GetPrefix() + "*"
 	keys, err := s.store.GetClient().Keys(s.store.GetContext(), pattern).Result()
 	if err != nil {
@@ -170,18 +176,18 @@ func (s *ShortenerService) ValidateLongURL(LongURL string) error {
 	}
 
 	parsedURL, err := url.Parse(LongURL)
-    if err != nil {
-        return errors.New("URL not valid")
-    }
+	if err != nil {
+		return errors.New("URL not valid")
+	}
 
 	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
-        return errors.New("Only http and https URLs are supported")
-    }
+		return errors.New("Only http and https URLs are supported")
+	}
 
 	hostname := strings.ToLower(parsedURL.Hostname())
-    if hostname == "" || hostname == "localhost" || strings.HasPrefix(hostname, "127.") || strings.HasPrefix(hostname, "192.168.") || strings.HasPrefix(hostname, "10.") {
-        return errors.New("Invalid hostname")
-    }
+	if hostname == "" || hostname == "localhost" || strings.HasPrefix(hostname, "127.") || strings.HasPrefix(hostname, "192.168.") || strings.HasPrefix(hostname, "10.") {
+		return errors.New("Invalid hostname")
+	}
 	return nil
 
 }
